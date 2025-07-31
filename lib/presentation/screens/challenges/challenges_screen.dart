@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:star_frontend/core/constants/app_colors.dart';
 import 'package:star_frontend/core/constants/app_strings.dart';
-import 'package:star_frontend/core/navigation/app_router.dart';
-import 'package:star_frontend/presentation/widgets/common/custom_button.dart';
-import 'package:star_frontend/presentation/widgets/common/custom_text_field.dart';
+import 'package:star_frontend/data/models/challenge_with_details.dart';
+import 'package:star_frontend/presentation/providers/challenge_provider.dart';
+import 'package:star_frontend/presentation/screens/challenges/challenge_detail_screen.dart';
 
-/// Challenges screen showing all available challenges
+/// Challenges screen showing all available challenges with tabs
 class ChallengesScreen extends StatefulWidget {
   const ChallengesScreen({super.key});
 
@@ -13,21 +14,24 @@ class ChallengesScreen extends StatefulWidget {
   State<ChallengesScreen> createState() => _ChallengesScreenState();
 }
 
-class _ChallengesScreenState extends State<ChallengesScreen> with TickerProviderStateMixin {
+class _ChallengesScreenState extends State<ChallengesScreen>
+    with TickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
-  
+
   String _searchQuery = '';
-  int _selectedTab = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() {
-      setState(() {
-        _selectedTab = _tabController.index;
-      });
+
+    // Load challenges when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ChallengeProvider>(
+        context,
+        listen: false,
+      ).loadAllChallenges();
     });
   }
 
@@ -44,13 +48,13 @@ class _ChallengesScreenState extends State<ChallengesScreen> with TickerProvider
       appBar: AppBar(
         title: const Text(AppStrings.challenges),
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
+        foregroundColor: Colors.white,
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: AppColors.white,
-          labelColor: AppColors.white,
-          unselectedLabelColor: AppColors.white.withOpacity(0.7),
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white.withValues(alpha: 0.7),
           tabs: const [
             Tab(text: 'Actifs'),
             Tab(text: 'À venir'),
@@ -73,13 +77,6 @@ class _ChallengesScreenState extends State<ChallengesScreen> with TickerProvider
           ),
         ],
       ),
-      floatingActionButton: CustomFloatingActionButton(
-        icon: Icons.add,
-        onPressed: () {
-          // TODO: Navigate to create challenge screen
-        },
-        tooltip: 'Créer un challenge',
-      ),
     );
   }
 
@@ -87,17 +84,32 @@ class _ChallengesScreenState extends State<ChallengesScreen> with TickerProvider
     return Container(
       padding: const EdgeInsets.all(16),
       color: AppColors.background,
-      child: SearchTextField(
+      child: TextField(
         controller: _searchController,
-        hintText: 'Rechercher un challenge...',
+        decoration: InputDecoration(
+          hintText: 'Rechercher un challenge...',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                )
+              : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+        ),
         onChanged: (value) {
           setState(() {
             _searchQuery = value;
-          });
-        },
-        onClear: () {
-          setState(() {
-            _searchQuery = '';
           });
         },
       ),
@@ -105,314 +117,318 @@ class _ChallengesScreenState extends State<ChallengesScreen> with TickerProvider
   }
 
   Widget _buildChallengesList(String type) {
-    // Mock data - replace with actual data from provider
-    final challenges = _getMockChallenges(type);
-    
-    if (challenges.isEmpty) {
-      return _buildEmptyState(type);
-    }
+    return Consumer<ChallengeProvider>(
+      builder: (context, challengeProvider, child) {
+        if (challengeProvider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: challenges.length,
-      itemBuilder: (context, index) {
-        final challenge = challenges[index];
-        return _buildChallengeCard(challenge);
+        if (challengeProvider.error != null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: AppColors.error),
+                const SizedBox(height: 16),
+                Text(
+                  'Erreur de chargement',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  challengeProvider.error!,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => challengeProvider.loadAllChallenges(),
+                  child: const Text('Réessayer'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        List<ChallengeWithDetails> challenges = [];
+
+        switch (type) {
+          case 'active':
+            // Challenges 'Actifs' = statut 'en cours'
+            challenges = challengeProvider.allChallenges
+                .where((c) => c.statut == 'en cours')
+                .toList();
+            break;
+          case 'upcoming':
+            // Challenges 'À venir' = statut 'en attente'
+            challenges = challengeProvider.allChallenges
+                .where((c) => c.statut == 'en attente')
+                .toList();
+            break;
+          case 'completed':
+            // Challenges 'Terminés' = statut 'terminé'
+            challenges = challengeProvider.allChallenges
+                .where((c) => c.statut == 'terminé')
+                .toList();
+            break;
+        }
+
+        // Filter by search query
+        if (_searchQuery.isNotEmpty) {
+          challenges = challenges
+              .where(
+                (c) => c.nom.toLowerCase().contains(_searchQuery.toLowerCase()),
+              )
+              .toList();
+        }
+
+        if (challenges.isEmpty) {
+          return _buildEmptyState(type);
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: challenges.length,
+          itemBuilder: (context, index) {
+            final challenge = challenges[index];
+            return _buildChallengeCard(challenge);
+          },
+        );
       },
     );
   }
 
   Widget _buildEmptyState(String type) {
-    String message;
+    String title;
+    String subtitle;
     IconData icon;
-    
+
     switch (type) {
       case 'active':
-        message = 'Aucun challenge actif';
+        title = 'Aucun challenge actif';
+        subtitle = 'Il n\'y a pas de challenges actifs pour le moment';
         icon = Icons.emoji_events_outlined;
         break;
       case 'upcoming':
-        message = 'Aucun challenge à venir';
+        title = 'Aucun challenge à venir';
+        subtitle = 'Aucun nouveau challenge n\'est prévu';
         icon = Icons.schedule;
         break;
       case 'completed':
-        message = 'Aucun challenge terminé';
-        icon = Icons.check_circle_outline;
+        title = 'Aucun challenge terminé';
+        subtitle = 'Vous n\'avez pas encore terminé de challenges';
+        icon = Icons.flag_outlined;
         break;
       default:
-        message = 'Aucun challenge';
-        icon = Icons.inbox_outlined;
+        title = 'Aucun challenge';
+        subtitle = 'Aucun challenge trouvé';
+        icon = Icons.search_off;
     }
 
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 64,
-            color: AppColors.textHint,
-          ),
+          Icon(icon, size: 64, color: AppColors.textSecondary),
           const SizedBox(height: 16),
           Text(
-            message,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 8),
           Text(
-            'Les challenges apparaîtront ici',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.textHint,
-            ),
+            subtitle,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildChallengeCard(Map<String, dynamic> challenge) {
+  Widget _buildChallengeCard(ChallengeWithDetails challenge) {
+    final statusColor = Color(
+      int.parse(challenge.statusColorHex.substring(1), radix: 16) + 0xFF000000,
+    );
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => AppRouter.goChallengeDetail(context, challenge['id']),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      challenge['title'],
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    challenge.nom,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  _buildStatusChip(challenge['status']),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                challenge['description'],
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    challenge.statusDisplayName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              challenge.description ??
+                  'Développez une solution innovante pour améliorer l\'expérience utilisateur',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.people, size: 16, color: AppColors.textSecondary),
+                const SizedBox(width: 4),
+                Text(
+                  '${challenge.participantsCount} participants',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Icon(
+                  Icons.access_time,
+                  size: 16,
                   color: AppColors.textSecondary,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(
-                    Icons.people_outline,
-                    size: 16,
+                const SizedBox(width: 4),
+                Text(
+                  _getDurationText(challenge),
+                  style: TextStyle(
                     color: AppColors.textSecondary,
+                    fontSize: 12,
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${challenge['participants']} participants',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Progress bar
+            LinearProgressIndicator(
+              value: 0.6, // TODO: Get real progress
+              backgroundColor: AppColors.textHint.withValues(alpha: 0.3),
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.success),
+              minHeight: 6,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Text(
+                  '60%', // TODO: Get real progress
+                  style: TextStyle(
+                    color: AppColors.success,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
-                  const Spacer(),
-                  Icon(
-                    Icons.schedule,
-                    size: 16,
-                    color: AppColors.textSecondary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    challenge['duration'],
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              if (challenge['progress'] != null) ...[
-                const SizedBox(height: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+                const Spacer(),
+                Row(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Progression',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
+                    if (challenge.isParticipating)
+                      TextButton(
+                        onPressed: () {
+                          // TODO: Implement quit challenge
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.error,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
                           ),
                         ),
-                        Text(
-                          '${(challenge['progress'] * 100).toInt()}%',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
+                        child: const Text('Quitter'),
+                      )
+                    else
+                      ElevatedButton(
+                        onPressed: () {
+                          // TODO: Implement join challenge
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    LinearProgressIndicator(
-                      value: challenge['progress'],
-                      backgroundColor: AppColors.greyLight,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        _getStatusColor(challenge['status']),
+                        child: const Text('Rejoindre'),
                       ),
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChallengeDetailScreen(
+                              challengeId: challenge.id,
+                            ),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                      ),
+                      child: const Text('Détails'),
                     ),
                   ],
                 ),
               ],
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  if (challenge['isParticipating'] == true)
-                    SmallButton(
-                      text: 'Quitter',
-                      onPressed: () {
-                        // TODO: Implement leave challenge
-                      },
-                      isOutlined: true,
-                      textColor: AppColors.error,
-                    )
-                  else
-                    SmallButton(
-                      text: 'Rejoindre',
-                      onPressed: () {
-                        // TODO: Implement join challenge
-                      },
-                      backgroundColor: AppColors.primary,
-                    ),
-                  const Spacer(),
-                  SmallButton(
-                    text: 'Détails',
-                    onPressed: () => AppRouter.goChallengeDetail(context, challenge['id']),
-                    isOutlined: true,
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildStatusChip(String status) {
-    Color color = _getStatusColor(status);
-    String text = _getStatusText(status);
+  String _getDurationText(ChallengeWithDetails challenge) {
+    final now = DateTime.now();
+    final endDate = challenge.dateFin;
+    final difference = endDate.difference(now);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return AppColors.challengeActive;
-      case 'upcoming':
-        return AppColors.challengePending;
-      case 'completed':
-        return AppColors.challengeCompleted;
-      case 'cancelled':
-        return AppColors.challengeCancelled;
-      default:
-        return AppColors.grey;
-    }
-  }
-
-  String _getStatusText(String status) {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return 'Actif';
-      case 'upcoming':
-        return 'À venir';
-      case 'completed':
-        return 'Terminé';
-      case 'cancelled':
-        return 'Annulé';
-      default:
-        return status;
-    }
-  }
-
-  List<Map<String, dynamic>> _getMockChallenges(String type) {
-    // Mock data - replace with actual API calls
-    switch (type) {
-      case 'active':
-        return [
-          {
-            'id': '1',
-            'title': 'Innovation Challenge 2024',
-            'description': 'Développez une solution innovante pour améliorer l\'expérience utilisateur',
-            'status': 'active',
-            'participants': 45,
-            'duration': '2 semaines restantes',
-            'progress': 0.6,
-            'isParticipating': true,
-          },
-          {
-            'id': '2',
-            'title': 'Code Quality Sprint',
-            'description': 'Améliorez la qualité du code et réduisez la dette technique',
-            'status': 'active',
-            'participants': 23,
-            'duration': '5 jours restants',
-            'progress': 0.8,
-            'isParticipating': false,
-          },
-        ];
-      case 'upcoming':
-        return [
-          {
-            'id': '3',
-            'title': 'Green Tech Challenge',
-            'description': 'Créez des solutions technologiques durables et écologiques',
-            'status': 'upcoming',
-            'participants': 0,
-            'duration': 'Commence dans 3 jours',
-            'isParticipating': false,
-          },
-        ];
-      case 'completed':
-        return [
-          {
-            'id': '4',
-            'title': 'Mobile App Contest',
-            'description': 'Développement d\'une application mobile native',
-            'status': 'completed',
-            'participants': 67,
-            'duration': 'Terminé il y a 1 semaine',
-            'progress': 1.0,
-            'isParticipating': true,
-          },
-        ];
-      default:
-        return [];
+    if (difference.isNegative) {
+      return 'Terminé';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays} jour${difference.inDays > 1 ? 's' : ''} restant${difference.inDays > 1 ? 's' : ''}';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} heure${difference.inHours > 1 ? 's' : ''} restante${difference.inHours > 1 ? 's' : ''}';
+    } else {
+      return 'Moins d\'une heure';
     }
   }
 }

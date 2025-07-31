@@ -5,8 +5,11 @@ import 'package:star_frontend/core/constants/app_strings.dart';
 import 'package:star_frontend/core/navigation/app_router.dart';
 import 'package:star_frontend/presentation/providers/auth_provider.dart';
 import 'package:star_frontend/presentation/providers/user_stats_provider.dart';
+import 'package:star_frontend/presentation/providers/challenge_provider.dart';
 import 'package:star_frontend/presentation/widgets/common/custom_button.dart';
 import 'package:star_frontend/presentation/widgets/home/activity_card.dart';
+import 'package:star_frontend/presentation/widgets/challenges/challenge_card.dart';
+import 'package:star_frontend/presentation/screens/challenges/challenge_detail_screen.dart';
 
 /// Home screen - main dashboard
 class HomeScreen extends StatefulWidget {
@@ -35,9 +38,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         context,
         listen: false,
       );
+      final challengeProvider = Provider.of<ChallengeProvider>(
+        context,
+        listen: false,
+      );
 
       if (authProvider.isAuthenticated && authProvider.currentUser != null) {
-        userStatsProvider.loadAllUserData(authProvider.currentUser!.id);
+        final userId = authProvider.currentUser!.id;
+        userStatsProvider.loadAllUserData(userId);
+        challengeProvider.setCurrentUserId(userId);
+        challengeProvider.loadAllChallenges();
       }
     });
   }
@@ -96,6 +106,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             _buildQuickStats(),
                             const SizedBox(height: 24),
                             _buildQuickActions(),
+                            const SizedBox(height: 24),
+                            _buildActiveChallenges(),
                             const SizedBox(height: 24),
                             _buildRecentActivity(),
                           ],
@@ -413,6 +425,97 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               Column(
                 children: userStatsProvider.recentActivities
                     .map((activity) => ActivityCard(activity: activity))
+                    .toList(),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildActiveChallenges() {
+    return Consumer<ChallengeProvider>(
+      builder: (context, challengeProvider, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Challenges actifs',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                if (challengeProvider.hasChallenges)
+                  TextButton(
+                    onPressed: () {
+                      AppRouter.goChallenges(context);
+                    },
+                    child: const Text('Voir tout'),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (challengeProvider.isLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (challengeProvider.allChallenges
+                .where((c) => c.statut == 'en cours')
+                .isEmpty)
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.emoji_events,
+                        size: 48,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Aucun challenge actif',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Consultez la page challenges pour découvrir de nouveaux défis',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textHint,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Column(
+                children: challengeProvider.allChallenges
+                    .where((c) => c.statut == 'en cours')
+                    .take(3) // Afficher seulement les 3 premiers
+                    .map(
+                      (challenge) => ChallengeCard(
+                        challenge: challenge,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChallengeDetailScreen(
+                                challengeId: challenge.id,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    )
                     .toList(),
               ),
           ],

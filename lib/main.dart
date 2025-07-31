@@ -9,6 +9,7 @@ import 'package:star_frontend/data/services/storage_service.dart';
 import 'package:star_frontend/presentation/providers/auth_provider.dart';
 import 'package:star_frontend/presentation/providers/user_stats_provider.dart';
 import 'package:star_frontend/presentation/providers/leaderboard_provider.dart';
+import 'package:star_frontend/presentation/providers/challenge_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,6 +48,7 @@ class StarChallengeApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => UserStatsProvider()),
         ChangeNotifierProvider(create: (_) => LeaderboardProvider()),
+        ChangeNotifierProvider(create: (_) => ChallengeProvider()),
       ],
       child: MaterialApp.router(
         title: AppStrings.appName,
