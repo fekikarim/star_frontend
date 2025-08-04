@@ -6,6 +6,7 @@ import 'package:star_frontend/presentation/screens/auth/login_screen.dart';
 import 'package:star_frontend/presentation/screens/home/home_screen.dart';
 import 'package:star_frontend/presentation/screens/challenges/challenges_screen.dart';
 import 'package:star_frontend/presentation/screens/challenges/challenge_detail_screen.dart';
+import 'package:star_frontend/presentation/screens/challenges/user_participations_screen.dart';
 import 'package:star_frontend/presentation/screens/leaderboard/leaderboard_screen.dart';
 import 'package:star_frontend/presentation/screens/profile/profile_screen.dart';
 import 'package:star_frontend/presentation/screens/splash/splash_screen.dart';
@@ -66,6 +67,11 @@ class AppRouter {
                     final challengeId = state.pathParameters['id']!;
                     return ChallengeDetailScreen(challengeId: challengeId);
                   },
+                ),
+                GoRoute(
+                  path: 'my-participations',
+                  name: 'my-participations',
+                  builder: (context, state) => const UserParticipationsScreen(),
                 ),
               ],
             ),
@@ -143,6 +149,11 @@ class AppRouter {
   /// Navigate to challenge detail screen
   static void goChallengeDetail(BuildContext context, String challengeId) {
     context.goNamed('challenge-detail', pathParameters: {'id': challengeId});
+  }
+
+  /// Navigate to user participations screen
+  static void goMyParticipations(BuildContext context) {
+    context.goNamed('my-participations');
   }
 
   /// Navigate to leaderboard screen

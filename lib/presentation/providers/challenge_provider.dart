@@ -1,12 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:star_frontend/core/utils/logger.dart';
 import 'package:star_frontend/data/models/challenge_with_details.dart';
+import 'package:star_frontend/data/models/participant.dart';
 import 'package:star_frontend/data/services/challenge_service.dart';
+import 'package:star_frontend/data/services/participant_service.dart';
 
 /// Provider for managing challenges
 class ChallengeProvider with ChangeNotifier {
   final ChallengeService _challengeService = ChallengeService();
-  
+  final ParticipantService _participantService = ParticipantService();
+
   // State
   List<ChallengeWithDetails> _allChallenges = [];
   List<ChallengeWithDetails> _pendingChallenges = [];
@@ -15,7 +18,7 @@ class ChallengeProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   String? _currentUserId;
-  
+
   // Getters
   List<ChallengeWithDetails> get allChallenges => _allChallenges;
   List<ChallengeWithDetails> get pendingChallenges => _pendingChallenges;
@@ -23,7 +26,7 @@ class ChallengeProvider with ChangeNotifier {
   List<ChallengeWithDetails> get finishedChallenges => _finishedChallenges;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  
+
   /// Set current user ID
   void setCurrentUserId(String? userId) {
     if (_currentUserId != userId) {
@@ -34,22 +37,22 @@ class ChallengeProvider with ChangeNotifier {
       }
     }
   }
-  
+
   /// Load all challenges
   Future<void> loadAllChallenges() async {
     try {
       _setLoading(true);
       _clearError();
-      
+
       AppLogger.info('Loading all challenges for user: $_currentUserId');
-      
+
       final challenges = await _challengeService.getChallengesForApp(
         userId: _currentUserId,
       );
-      
+
       _allChallenges = challenges;
       _categorizesChallenges();
-      
+
       AppLogger.info('Loaded ${challenges.length} challenges');
       notifyListeners();
     } catch (e) {
@@ -59,20 +62,20 @@ class ChallengeProvider with ChangeNotifier {
       _setLoading(false);
     }
   }
-  
+
   /// Load challenges by status
   Future<void> loadChallengesByStatus(String status) async {
     try {
       _setLoading(true);
       _clearError();
-      
+
       AppLogger.info('Loading challenges with status: $status');
-      
+
       final challenges = await _challengeService.getChallengesByStatusForApp(
         status,
         userId: _currentUserId,
       );
-      
+
       switch (status.toLowerCase()) {
         case 'en_attente':
           _pendingChallenges = challenges;
@@ -85,8 +88,10 @@ class ChallengeProvider with ChangeNotifier {
           _finishedChallenges = challenges;
           break;
       }
-      
-      AppLogger.info('Loaded ${challenges.length} challenges with status: $status');
+
+      AppLogger.info(
+        'Loaded ${challenges.length} challenges with status: $status',
+      );
       notifyListeners();
     } catch (e) {
       AppLogger.error('Failed to load challenges by status: $status', e);
@@ -95,12 +100,12 @@ class ChallengeProvider with ChangeNotifier {
       _setLoading(false);
     }
   }
-  
+
   /// Refresh all challenges
   Future<void> refreshChallenges() async {
     await loadAllChallenges();
   }
-  
+
   /// Clear all data
   void clearData() {
     _allChallenges = [];
@@ -110,65 +115,144 @@ class ChallengeProvider with ChangeNotifier {
     _clearError();
     notifyListeners();
   }
-  
+
   // Private methods
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();
   }
-  
+
   void _setError(String error) {
     _error = error;
     notifyListeners();
   }
-  
+
   void _clearError() {
     _error = null;
   }
-  
+
   void _categorizesChallenges() {
     _pendingChallenges = _allChallenges.where((c) => c.isPending).toList();
     _activeChallenges = _allChallenges.where((c) => c.isActive).toList();
     _finishedChallenges = _allChallenges.where((c) => c.isFinished).toList();
   }
-  
+
   // Computed properties
-  
+
   /// Get total number of challenges
   int get totalChallenges => _allChallenges.length;
-  
+
   /// Get number of challenges user is participating in
-  int get participatingChallenges => _allChallenges.where((c) => c.isParticipating).length;
-  
+  int get participatingChallenges =>
+      _allChallenges.where((c) => c.isParticipating).length;
+
   /// Get number of active challenges
   int get activeChallengesCount => _activeChallenges.length;
-  
+
   /// Get number of pending challenges
   int get pendingChallengesCount => _pendingChallenges.length;
-  
+
   /// Get number of finished challenges
   int get finishedChallengesCount => _finishedChallenges.length;
-  
+
   /// Get challenges ending soon (less than 3 days)
-  List<ChallengeWithDetails> get challengesEndingSoon => 
+  List<ChallengeWithDetails> get challengesEndingSoon =>
       _activeChallenges.where((c) => c.isEndingSoon).toList();
-  
+
   /// Get user's participating challenges
-  List<ChallengeWithDetails> get userParticipatingChallenges => 
+  List<ChallengeWithDetails> get userParticipatingChallenges =>
       _allChallenges.where((c) => c.isParticipating).toList();
-  
+
   /// Check if user has any challenges
   bool get hasChallenges => _allChallenges.isNotEmpty;
-  
+
   /// Check if user is participating in any challenges
   bool get hasParticipatingChallenges => participatingChallenges > 0;
-  
+
   /// Get challenge by ID
   ChallengeWithDetails? getChallengeById(String id) {
     try {
       return _allChallenges.firstWhere((c) => c.id == id);
     } catch (e) {
       return null;
+    }
+  }
+
+  /// Join challenge
+  Future<void> joinChallenge(String userId, String challengeId) async {
+    try {
+      AppLogger.info('Joining challenge: $challengeId for user: $userId');
+
+      await _participantService.joinChallenge(userId, challengeId);
+
+      // Refresh challenges to update participation status
+      await loadAllChallenges();
+
+      AppLogger.info('Successfully joined challenge: $challengeId');
+    } catch (e) {
+      AppLogger.error('Failed to join challenge: $challengeId', e);
+      rethrow;
+    }
+  }
+
+  /// Leave challenge
+  Future<void> leaveChallenge(String userId, String challengeId) async {
+    try {
+      AppLogger.info('Leaving challenge: $challengeId for user: $userId');
+
+      await _participantService.leaveChallenge(userId, challengeId);
+
+      // Refresh challenges to update participation status
+      await loadAllChallenges();
+
+      AppLogger.info('Successfully left challenge: $challengeId');
+    } catch (e) {
+      AppLogger.error('Failed to leave challenge: $challengeId', e);
+      rethrow;
+    }
+  }
+
+  /// Get user participations
+  Future<List<Participant>> getUserParticipations(String userId) async {
+    try {
+      AppLogger.info('Getting user participations for user: $userId');
+
+      final participations = await _participantService
+          .getUserParticipationsWithStatus(userId);
+
+      AppLogger.info(
+        'Found ${participations.length} participations for user: $userId',
+      );
+      return participations;
+    } catch (e) {
+      AppLogger.error('Failed to get user participations for user: $userId', e);
+      rethrow;
+    }
+  }
+
+  /// Get user participations by status
+  Future<List<Participant>> getUserParticipationsByStatus(
+    String userId,
+    String status,
+  ) async {
+    try {
+      AppLogger.info(
+        'Getting user participations with status $status for user: $userId',
+      );
+
+      final participations = await _participantService
+          .getUserParticipationsByStatus(userId, status);
+
+      AppLogger.info(
+        'Found ${participations.length} participations with status $status for user: $userId',
+      );
+      return participations;
+    } catch (e) {
+      AppLogger.error(
+        'Failed to get user participations by status for user: $userId',
+        e,
+      );
+      rethrow;
     }
   }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:star_frontend/core/constants/app_colors.dart';
 import 'package:star_frontend/data/models/challenge_with_details.dart';
+import 'package:star_frontend/data/services/participant_service.dart';
+import 'package:star_frontend/presentation/providers/auth_provider.dart';
 import 'package:star_frontend/presentation/providers/challenge_provider.dart';
 
 /// Screen for displaying detailed information about a specific challenge
@@ -364,13 +366,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
             child: const Text('Annuler'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement join logic
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Challenge rejoint !')),
-              );
-            },
+            onPressed: () => _joinChallenge(context),
             child: const Text('Rejoindre'),
           ),
         ],
@@ -390,18 +386,147 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
             child: const Text('Annuler'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement quit logic
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Challenge quitté')));
-            },
+            onPressed: () => _quitChallenge(context),
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Quitter'),
           ),
         ],
       ),
     );
+  }
+
+  /// Join challenge
+  Future<void> _joinChallenge(BuildContext context) async {
+    Navigator.pop(context); // Close dialog
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final challengeProvider = Provider.of<ChallengeProvider>(
+      context,
+      listen: false,
+    );
+    final participantService = ParticipantService();
+
+    // Check if user can participate in challenges
+    if (!authProvider.currentUser!.canParticipateInChallenges) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Seuls les administrateurs, agents et responsables régionaux peuvent participer aux challenges.',
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      // Show loading
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 16),
+                Text('Rejoindre le challenge...'),
+              ],
+            ),
+          ),
+        );
+      }
+
+      await participantService.joinChallenge(
+        authProvider.userId,
+        widget.challengeId,
+      );
+
+      // Refresh challenges
+      await challengeProvider.loadAllChallenges();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Vous avez rejoint "${challenge?.nom}". Votre participation est en attente de validation.',
+            ),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la participation: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Quit challenge
+  Future<void> _quitChallenge(BuildContext context) async {
+    Navigator.pop(context); // Close dialog
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final challengeProvider = Provider.of<ChallengeProvider>(
+      context,
+      listen: false,
+    );
+    final participantService = ParticipantService();
+
+    try {
+      // Show loading
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 16),
+                Text('Quitter le challenge...'),
+              ],
+            ),
+          ),
+        );
+      }
+
+      await participantService.leaveChallenge(
+        authProvider.userId,
+        widget.challengeId,
+      );
+
+      // Refresh challenges
+      await challengeProvider.loadAllChallenges();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Vous avez quitté "${challenge?.nom}".'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la sortie: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }

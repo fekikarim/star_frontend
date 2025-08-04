@@ -13,9 +13,9 @@ Challenge _$ChallengeFromJson(Map<String, dynamic> json) => Challenge(
   dateFin: DateTime.parse(json['dateFin'] as String),
   statut: json['statut'] as String,
   createurId: json['createurId'] as String,
-  createdAt: json['created_at'] == null
+  createdAt: json['createdAt'] == null
       ? null
-      : DateTime.parse(json['created_at'] as String),
+      : DateTime.parse(json['createdAt'] as String),
 );
 
 Map<String, dynamic> _$ChallengeToJson(Challenge instance) => <String, dynamic>{
@@ -25,7 +25,7 @@ Map<String, dynamic> _$ChallengeToJson(Challenge instance) => <String, dynamic>{
   'dateFin': instance.dateFin.toIso8601String(),
   'statut': instance.statut,
   'createurId': instance.createurId,
-  'created_at': instance.createdAt?.toIso8601String(),
+  'createdAt': instance.createdAt?.toIso8601String(),
 };
 
 CreateChallengeRequest _$CreateChallengeRequestFromJson(

@@ -15,9 +15,9 @@ ChallengeWithDetails _$ChallengeWithDetailsFromJson(
   dateFin: DateTime.parse(json['dateFin'] as String),
   statut: json['statut'] as String,
   createurId: json['createurId'] as String,
-  createdAt: json['created_at'] == null
+  createdAt: json['createdAt'] == null
       ? null
-      : DateTime.parse(json['created_at'] as String),
+      : DateTime.parse(json['createdAt'] as String),
   participantsCount: (json['participantsCount'] as num).toInt(),
   winnersCount: (json['winnersCount'] as num).toInt(),
   isParticipating: json['isParticipating'] as bool,
@@ -33,7 +33,7 @@ Map<String, dynamic> _$ChallengeWithDetailsToJson(
   'dateFin': instance.dateFin.toIso8601String(),
   'statut': instance.statut,
   'createurId': instance.createurId,
-  'created_at': instance.createdAt?.toIso8601String(),
+  'createdAt': instance.createdAt?.toIso8601String(),
   'participantsCount': instance.participantsCount,
   'winnersCount': instance.winnersCount,
   'isParticipating': instance.isParticipating,

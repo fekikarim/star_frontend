@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:star_frontend/core/constants/app_colors.dart';
 import 'package:star_frontend/core/constants/app_strings.dart';
 import 'package:star_frontend/data/models/challenge_with_details.dart';
+import 'package:star_frontend/data/services/participant_service.dart';
+import 'package:star_frontend/core/navigation/app_router.dart';
+import 'package:star_frontend/presentation/providers/auth_provider.dart';
 import 'package:star_frontend/presentation/providers/challenge_provider.dart';
 import 'package:star_frontend/presentation/screens/challenges/challenge_detail_screen.dart';
 
@@ -50,6 +53,22 @@ class _ChallengesScreenState extends State<ChallengesScreen>
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          Consumer<AuthProvider>(
+            builder: (context, authProvider, child) {
+              // Only show the button if user can participate in challenges
+              if (authProvider.isAuthenticated &&
+                  authProvider.currentUser!.canParticipateInChallenges) {
+                return IconButton(
+                  onPressed: () => AppRouter.goMyParticipations(context),
+                  icon: const Icon(Icons.list_alt),
+                  tooltip: 'Mes Participations',
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
@@ -358,9 +377,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
                   children: [
                     if (challenge.isParticipating)
                       TextButton(
-                        onPressed: () {
-                          // TODO: Implement quit challenge
-                        },
+                        onPressed: () => _showQuitDialog(context, challenge),
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.error,
                           padding: const EdgeInsets.symmetric(
@@ -372,9 +389,7 @@ class _ChallengesScreenState extends State<ChallengesScreen>
                       )
                     else
                       ElevatedButton(
-                        onPressed: () {
-                          // TODO: Implement join challenge
-                        },
+                        onPressed: () => _showJoinDialog(context, challenge),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
@@ -429,6 +444,190 @@ class _ChallengesScreenState extends State<ChallengesScreen>
       return '${difference.inHours} heure${difference.inHours > 1 ? 's' : ''} restante${difference.inHours > 1 ? 's' : ''}';
     } else {
       return 'Moins d\'une heure';
+    }
+  }
+
+  /// Show join challenge dialog
+  void _showJoinDialog(BuildContext context, ChallengeWithDetails challenge) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    // Check if user can participate in challenges
+    if (!authProvider.currentUser!.canParticipateInChallenges) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Seuls les administrateurs, agents et responsables régionaux peuvent participer aux challenges.',
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rejoindre le challenge'),
+        content: Text(
+          'Voulez-vous rejoindre "${challenge.nom}" ?\n\nVotre participation sera en attente de validation par un administrateur.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => _joinChallenge(context, challenge),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: const Text('Rejoindre'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show quit challenge dialog
+  void _showQuitDialog(BuildContext context, ChallengeWithDetails challenge) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Quitter le challenge'),
+        content: Text('Êtes-vous sûr de vouloir quitter "${challenge.nom}" ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => _quitChallenge(context, challenge),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Quitter'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Join challenge
+  Future<void> _joinChallenge(
+    BuildContext context,
+    ChallengeWithDetails challenge,
+  ) async {
+    Navigator.pop(context); // Close dialog
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final challengeProvider = Provider.of<ChallengeProvider>(
+      context,
+      listen: false,
+    );
+    final participantService = ParticipantService();
+
+    try {
+      // Show loading
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 16),
+                Text('Rejoindre le challenge...'),
+              ],
+            ),
+          ),
+        );
+      }
+
+      await participantService.joinChallenge(authProvider.userId, challenge.id);
+
+      // Refresh challenges
+      await challengeProvider.loadAllChallenges();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Vous avez rejoint "${challenge.nom}". Votre participation est en attente de validation.',
+            ),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la participation: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Quit challenge
+  Future<void> _quitChallenge(
+    BuildContext context,
+    ChallengeWithDetails challenge,
+  ) async {
+    Navigator.pop(context); // Close dialog
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final challengeProvider = Provider.of<ChallengeProvider>(
+      context,
+      listen: false,
+    );
+    final participantService = ParticipantService();
+
+    try {
+      // Show loading
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 16),
+                Text('Quitter le challenge...'),
+              ],
+            ),
+          ),
+        );
+      }
+
+      await participantService.leaveChallenge(
+        authProvider.userId,
+        challenge.id,
+      );
+
+      // Refresh challenges
+      await challengeProvider.loadAllChallenges();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Vous avez quitté "${challenge.nom}".'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la sortie: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 }

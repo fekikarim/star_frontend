@@ -13,7 +13,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
   late AnimationController _logoAnimationController;
   late AnimationController _textAnimationController;
   late Animation<double> _logoScaleAnimation;
@@ -35,21 +36,19 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       vsync: this,
     );
 
-    _logoScaleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _logoAnimationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
-    ));
+    _logoScaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _logoAnimationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
+      ),
+    );
 
-    _logoRotationAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _logoAnimationController,
-      curve: const Interval(0.0, 0.8, curve: Curves.easeInOut),
-    ));
+    _logoRotationAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _logoAnimationController,
+        curve: const Interval(0.0, 0.8, curve: Curves.easeInOut),
+      ),
+    );
 
     // Text animations
     _textAnimationController = AnimationController(
@@ -57,21 +56,20 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       vsync: this,
     );
 
-    _textFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _textAnimationController,
-      curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
-    ));
+    _textFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _textAnimationController,
+        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+      ),
+    );
 
-    _textSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.5),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _textAnimationController,
-      curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
-    ));
+    _textSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _textAnimationController,
+            curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+          ),
+        );
 
     // Start animations
     _logoAnimationController.forward();
@@ -138,9 +136,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.primaryGradient,
-        ),
+        decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
         child: SafeArea(
           child: Center(
             child: Column(
@@ -193,19 +189,21 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                           children: [
                             Text(
                               AppStrings.appName,
-                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                color: AppColors.white,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                              ),
+                              style: Theme.of(context).textTheme.headlineMedium
+                                  ?.copyWith(
+                                    color: AppColors.white,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.2,
+                                  ),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'Relevez les défis, gagnez des étoiles',
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: AppColors.white.withOpacity(0.9),
-                                letterSpacing: 0.5,
-                              ),
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(
+                                    color: AppColors.white.withOpacity(0.9),
+                                    letterSpacing: 0.5,
+                                  ),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -238,9 +236,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                           const SizedBox(height: 16),
                           Text(
                             'Initialisation...',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.white.withOpacity(0.8),
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: AppColors.white.withOpacity(0.8),
+                                ),
                           ),
                         ],
                       ),
@@ -260,9 +259,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                         padding: const EdgeInsets.only(bottom: 32),
                         child: Text(
                           'Version ${AppStrings.appVersion}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.white.withOpacity(0.7),
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.white.withOpacity(0.7),
+                              ),
                         ),
                       ),
                     );
