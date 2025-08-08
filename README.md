@@ -1,20 +1,20 @@
 <div align="center">
-	<img src="assets/logo.png" alt="STAR Challenge" height="96" />
+  <img src="assets/logo.png" alt="STAR Challenge" height="96" />
 
-	<h1>STAR Challenge – Frontend Flutter</h1>
+  <h1>STAR Challenge – Frontend Flutter</h1>
 
-	<p>
-		Application mobile moderne de gamification et de challenges, conçue avec Flutter (Material 3), un routage robuste, une architecture modulaire et une UX soignée.
-	</p>
+  <p>
+	Application mobile moderne de gamification et de challenges, conçue avec Flutter (Material 3), un routage robuste, une architecture modulaire et une UX soignée.
+  </p>
 
-	<p>
-		<img alt="Flutter" src="https://img.shields.io/badge/Flutter-%2302569B.svg?&logo=flutter&logoColor=white" />
-		<img alt="Dart" src="https://img.shields.io/badge/Dart-%230175C2.svg?&logo=dart&logoColor=white" />
-		<img alt="go_router" src="https://img.shields.io/badge/Routing-go__router-blue" />
-		<img alt="Provider" src="https://img.shields.io/badge/State-Provider-4caf50" />
-		<img alt="Riverpod" src="https://img.shields.io/badge/State-Riverpod-21a366" />
-		<img alt="Dio" src="https://img.shields.io/badge/HTTP-Dio-ff9800" />
-	</p>
+  <p>
+	<img alt="Flutter" src="https://img.shields.io/badge/Flutter-%2302569B.svg?&logo=flutter&logoColor=white" />
+	<img alt="Dart" src="https://img.shields.io/badge/Dart-%230175C2.svg?&logo=dart&logoColor=white" />
+	<img alt="go_router" src="https://img.shields.io/badge/Routing-go__router-blue" />
+	<img alt="Provider" src="https://img.shields.io/badge/State-Provider-4caf50" />
+	<img alt="Riverpod" src="https://img.shields.io/badge/State-Riverpod-21a366" />
+	<img alt="Dio" src="https://img.shields.io/badge/HTTP-Dio-ff9800" />
+  </p>
 </div>
 
 ## Aperçu rapide
@@ -114,6 +114,13 @@ Routage principal (`go_router`):
 - UI/UX: `flutter_svg`, `cached_network_image`, `shimmer`, `lottie`
 - Sérialisation: `json_annotation` + `json_serializable` (via `build_runner`)
 - Outils: `intl`, `uuid`, `logger`, `flutter_lints`
+
+---
+
+## Dépôts GitHub
+
+- Admin Dashboard: [github.com/fekikarim/starChallenge_dashboard](https://github.com/fekikarim/starChallenge_dashboard)
+- Backend API: [github.com/fekikarim/starChallenge_backend](https://github.com/fekikarim/starChallenge_backend)
 
 ---
 
@@ -219,7 +226,10 @@ Ce dépôt ne spécifie pas de licence. Ajoutez un fichier `LICENSE` si vous sou
 
 ## Contact
 
-Pour toute question ou suggestion, merci d’ouvrir une issue ou de contacter l’équipe projet.
+Pour toute question ou suggestion, merci d’ouvrir une issue ou de contacter :
+
+- Karim — email : [feki.karim28@gmail.com](mailto:feki.karim28@gmail.com) • LinkedIn : [linkedin.com/in/karimfeki](https://www.linkedin.com/in/karimfeki)
+- Nesrine — email : [nesrine.derouiche15@gmail.com](mailto:nesrine.derouiche15@gmail.com) • LinkedIn : [linkedin.com/in/nesrine-derouiche](https://www.linkedin.com/in/nesrine-derouiche)
 
 —
 
