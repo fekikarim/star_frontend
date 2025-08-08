@@ -220,7 +220,15 @@ Si besoin d’alléger le dépôt, envisagez de déplacer ces images vers `docs/
 
 ## Licence
 
-Ce dépôt ne spécifie pas de licence. Ajoutez un fichier `LICENSE` si vous souhaitez définir un cadre d’utilisation.
+Ce projet est distribué sous une licence d’utilisation professionnelle propriétaire. Consultez le fichier `LICENSE` à la racine pour les termes complets.
+
+Résumé des termes principaux :
+
+- Usage interne, non transférable et révocable.
+- Modifications autorisées pour des besoins internes.
+- Redistribution, sous‑licence, revente et publication publiques interdites sans accord écrit préalable.
+- Composants tiers soumis à leurs licences propres.
+- Aucune garantie ; responsabilité limitée.
 
 ---
 

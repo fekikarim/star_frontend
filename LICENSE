@@ -1,0 +1,52 @@
+STAR Challenge – Frontend Flutter
+License d’utilisation professionnelle (Proprietary License)
+Version 1.0 – 2025-08-08
+
+Copyright © 2025, Équipe STAR Challenge.
+Tous droits réservés.
+
+1. Objet
+Cette licence encadre l’utilisation du code source et des artefacts du projet « STAR Challenge – Frontend Flutter » (le « Logiciel »).
+
+2. Octroi de licence
+Sous réserve du respect des présentes conditions, le titulaire des droits vous accorde une licence limitée, non exclusive, non transférable et révocable pour :
+- installer et utiliser le Logiciel en interne, au sein de votre organisation ;
+- modifier le Logiciel pour vos besoins internes ;
+- déployer le Logiciel en production pour vos usages internes.
+
+3. Restrictions
+Sauf autorisation écrite préalable des détenteurs des droits, il vous est interdit de :
+- redistribuer, publier, mettre à disposition du public ou rendre accessible le Logiciel (ou des œuvres dérivées) sous quelque forme que ce soit, y compris via des dépôts publics, des boutiques d’applications ou des services SaaS ;
+- sous-licencier, louer, prêter, céder ou vendre tout ou partie du Logiciel ;
+- enlever ou altérer les mentions de copyright, de licence, d’attribution ou de marque ;
+- utiliser la marque, le logo ou l’identité visuelle du projet pour promouvoir des produits/solutions dérivés sans accord écrit.
+
+4. Composants tiers
+Le Logiciel peut intégrer des composants open source ou tiers qui restent soumis à leurs licences respectives. En cas de conflit, les termes de ces licences tierces prévalent pour les composants concernés.
+
+5. Support et mises à jour
+Sauf accord séparé, cette licence n’inclut aucune obligation de support, de maintenance ou de mise à jour.
+
+6. Confidentialité
+Si le Logiciel vous a été fourni dans un cadre privé, vous vous engagez à ne pas divulguer le code, les informations techniques ou la documentation sans accord écrit préalable.
+
+7. Résiliation
+La licence prend fin automatiquement en cas de non-respect des présentes conditions. À la résiliation, vous devez cesser toute utilisation et détruire toute copie du Logiciel et de sa documentation.
+
+8. Absence de garantie
+LE LOGICIEL EST FOURNI « TEL QUEL », SANS AUCUNE GARANTIE EXPRESSE OU IMPLICITE, Y COMPRIS MAIS SANS S’Y LIMITER LES GARANTIES DE QUALITÉ MARCHANDE, D’ADÉQUATION À UN USAGE PARTICULIER ET D’ABSENCE DE CONTREFAÇON.
+
+9. Limitation de responsabilité
+DANS LES LIMITES AUTORISÉES PAR LA LOI, EN AUCUN CAS LES AUTEURS OU TITULAIRES DES DROITS NE POURRONT ÊTRE TENUS RESPONSABLES DE DOMMAGES, RÉCLAMATIONS OU AUTRES RESPONSABILITÉS, QUE CE SOIT DANS UNE ACTION CONTRACTUELLE, DÉLICTUELLE OU AUTRE, DÉCOULANT DU LOGICIEL OU DE L’UTILISATION OU D’AUTRES INTERACTIONS AVEC LE LOGICIEL.
+
+10. Droit applicable et juridiction
+Les présentes sont régies par le droit applicable du ressort des titulaires des droits, sauf stipulation contraire dans un contrat séparé.
+
+11. Obtention d’une licence commerciale élargie
+Pour la redistribution, l’intégration dans des produits/saaS, la publication sur des stores, l’usage multi‑clients ou tout autre usage non couvert par la présente licence, veuillez contacter :
+- Karim – feki.karim28@gmail.com
+- Nesrine – nesrine.derouiche15@gmail.com
+
+—
+English summary (informative)
+This software is licensed under a proprietary, internal‑use professional license. You may use and modify it internally; redistribution, sublicensing, resale, and public publication are prohibited without prior written consent. Third‑party components remain under their own licenses. No warranty; liability is limited. For commercial redistribution or extended rights, contact the maintainers at the emails above.
