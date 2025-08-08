@@ -1,5 +1,3 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
-
 part of 'challenge_with_details.dart';
 
 // **************************************************************************

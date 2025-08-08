@@ -274,7 +274,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         const SizedBox(height: 8),
         Text(
-          '© 2024 ${AppStrings.appName}',
+          '© 2025 ${AppStrings.appName}',
           style: Theme.of(
             context,
           ).textTheme.bodySmall?.copyWith(color: AppColors.textHint),
